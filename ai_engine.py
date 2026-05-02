@@ -1,18 +1,9 @@
-"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  NOVA AI — Google Gemini AI Engine
-  Hindi Language | Smart Responses
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
-
 import random
 import logging
 import google.generativeai as genai
 from config import GEMINI_API_KEY
 
 logger = logging.getLogger("NOVA-AI")
-
-# ── System Prompts ─────────────────────────────────────────
 
 SYSTEM_PROMPT = """Tu NOVA AI hai — ek premium, modern aur intelligent Hindi Telegram chatbot.
 
@@ -43,7 +34,7 @@ FALLBACKS = [
     "Oops! Thodi technical problem aayi. Ek baar phir try karo! 🙏",
     "Maafi chahta hoon, abhi server slow hai. Dobara bhejo! 😊",
     "Abhi AI busy hai. 2 second ruko aur phir try karo! 🔄",
-    "Kuch gadbad ho gayi. Chinta mat karo, phir se likhog! 💪",
+    "Kuch gadbad ho gayi. Chinta mat karo, phir se likho! 💪",
 ]
 
 
@@ -70,8 +61,6 @@ class AIEngine:
     async def chat(self, user_message: str, history: list, deep_mode: bool = False) -> str:
         try:
             system = DEEP_PROMPT if deep_mode else SYSTEM_PROMPT
-
-            # Build Gemini history format
             chat_history = []
             for entry in history[-12:]:
                 role = "user" if entry["role"] == "user" else "model"
@@ -79,7 +68,6 @@ class AIEngine:
 
             convo = self.model.start_chat(history=chat_history)
 
-            # Inject system prompt on fresh chat
             if not chat_history:
                 full_msg = f"{system}\n\nUser ka message: {user_message}"
             else:
