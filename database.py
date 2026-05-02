@@ -1,9 +1,3 @@
-"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  NOVA AI — MongoDB Database Module
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
-
 import time
 import logging
 from datetime import datetime, date
@@ -36,10 +30,6 @@ class Database:
         self.messages.create_index("timestamp")
         self.banned.create_index("uid", unique=True)
 
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # USER MANAGEMENT
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     def add_user(self, uid: int, username: str, name: str):
         today = str(date.today())
         self.users.update_one(
@@ -69,10 +59,6 @@ class Database:
     def get_all_users_detail(self) -> list:
         return list(self.users.find({}, {"_id": 0}).sort("created_at", DESCENDING).limit(50))
 
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # PLAN MANAGEMENT
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     def get_plan(self, uid: int) -> str:
         user = self.users.find_one({"uid": uid}, {"plan": 1})
         return user.get("plan", "free") if user else "free"
@@ -82,10 +68,6 @@ class Database:
             {"uid": uid},
             {"$set": {"plan": plan, "plan_updated": datetime.utcnow()}}
         )
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # DAILY USAGE TRACKING
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def get_daily_usage(self, uid: int) -> int:
         user = self.users.find_one({"uid": uid}, {"daily_usage": 1, "last_usage_date": 1})
@@ -101,17 +83,11 @@ class Database:
         if user and user.get("last_usage_date") != today:
             self.users.update_one({"uid": uid}, {"$set": {"daily_usage": 0, "last_usage_date": today}})
         self.users.update_one({"uid": uid}, {"$inc": {"daily_usage": 1}})
-
-        # Global daily stats
         self.db["stats"].update_one(
             {"_id": "global"},
             {"$inc": {"messages_today": 1}, "$set": {"last_updated": datetime.utcnow()}},
             upsert=True
         )
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # CHAT HISTORY (MEMORY)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def get_history(self, uid: int) -> list:
         user = self.users.find_one({"uid": uid}, {"history": 1})
@@ -122,26 +98,18 @@ class Database:
             {"uid": uid},
             {"$push": {"history": {
                 "$each": [{"role": role, "content": content, "ts": datetime.utcnow()}],
-                "$slice": -20  # Keep last 20 messages
+                "$slice": -20
             }}}
         )
 
     def clear_history(self, uid: int):
         self.users.update_one({"uid": uid}, {"$set": {"history": []}})
 
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # SPAM PROTECTION
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     def record_message(self, uid: int):
         now = time.time()
-        # Keep only last 10 seconds of timestamps
         self.users.update_one(
             {"uid": uid},
-            {"$push": {"message_times": {
-                "$each": [now],
-                "$slice": -20
-            }}}
+            {"$push": {"message_times": {"$each": [now], "$slice": -20}}}
         )
 
     def is_spam(self, uid: int) -> bool:
@@ -151,10 +119,6 @@ class Database:
         now = time.time()
         recent = [t for t in user.get("message_times", []) if now - t < 10]
         return len(recent) > 8
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # BAN SYSTEM
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def ban_user(self, uid: int):
         self.banned.update_one(
@@ -168,10 +132,6 @@ class Database:
 
     def is_banned(self, uid: int) -> bool:
         return self.banned.find_one({"uid": uid}) is not None
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # STATISTICS
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def total_users(self) -> int:
         return self.users.count_documents({})
