@@ -1,10 +1,3 @@
-"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  NOVA AI — Premium Hindi Telegram Bot v3.0
-  MongoDB + Render Webhook + Gemini AI
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"""
-
 import logging
 import random
 import asyncio
@@ -30,7 +23,6 @@ from stickers import STICKER_IDS
 from database import db
 from ai_engine import AIEngine
 
-# ── Logging ───────────────────────────────────────────────
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     level=logging.INFO,
@@ -42,10 +34,6 @@ logging.basicConfig(
 logger = logging.getLogger("NOVA-BOT")
 ai = AIEngine()
 
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# DECORATORS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def admin_only(func):
     @wraps(func)
@@ -72,21 +60,14 @@ def spam_check(func):
     return wrapper
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# /start
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    user   = update.effective_user
-    uid    = user.id
-    name   = user.first_name or "Dost"
-
+    user  = update.effective_user
+    uid   = user.id
+    name  = user.first_name or "Dost"
     db.add_user(uid, user.username or "", name)
-    plan   = db.get_plan(uid)
-    badge  = "👑 Premium" if plan == "premium" else "🆓 Free"
-
+    plan  = db.get_plan(uid)
+    badge = "👑 Premium" if plan == "premium" else "🆓 Free"
     await update.message.reply_sticker(random.choice(STICKER_IDS))
-
     text = f"""
 ╔══════════════════════════╗
 ║  🤖 *NOVA AI में स्वागत है!*  ║
@@ -123,10 +104,6 @@ Hindi में बात करें, मैं समझूँगा! 😊
     )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# /help
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = """
 🤖 *NOVA AI — Command List*
@@ -156,10 +133,6 @@ async def help_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# /profile
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def profile_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user  = update.effective_user
     uid   = user.id
@@ -168,8 +141,8 @@ async def profile_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     used  = db.get_daily_usage(uid)
     limit = PREMIUM_DAILY_LIMIT if plan == "premium" else FREE_DAILY_LIMIT
     badge = "👑 Premium" if plan == "premium" else "🆓 Free"
-    bar   = "█" * min(10, int((used / max(limit,1)) * 10)) + "░" * (10 - min(10, int((used / max(limit,1)) * 10)))
-
+    filled = min(10, int((used / max(limit, 1)) * 10))
+    bar   = "█" * filled + "░" * (10 - filled)
     text = f"""
 ╔══════════════════════╗
 ║   👤 *आपकी Profile*   ║
@@ -193,36 +166,31 @@ async def profile_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# /sticker
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def sticker_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_sticker(random.choice(STICKER_IDS))
     await update.message.reply_text("😄 *Ye lo ek sticker!*", parse_mode=ParseMode.MARKDOWN)
 
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# /reset  /deep  /normal  /plan
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async def reset_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     db.clear_history(update.effective_user.id)
     await update.message.reply_sticker(random.choice(STICKER_IDS))
     await update.message.reply_text("🔄 *Memory reset ho gayi! Fresh start karo!* 😊", parse_mode=ParseMode.MARKDOWN)
 
+
 async def deep_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["deep_mode"] = True
     await update.message.reply_text("🧠 *Deep Mode ON!*\nAb detailed replies milenge. /normal se wapas jao.", parse_mode=ParseMode.MARKDOWN)
+
 
 async def normal_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["deep_mode"] = False
     await update.message.reply_text("💬 *Normal Mode ON!* Fast & short replies active.", parse_mode=ParseMode.MARKDOWN)
 
+
 async def plan_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     uid   = update.effective_user.id
     plan  = db.get_plan(uid)
-    badge = "✅ आप *Premium* पर हैं!" if plan == "premium" else "📌 आप *Free Plan* पर हैं"
+    badge = "✅ Aap *Premium* par hain!" if plan == "premium" else "📌 Aap *Free Plan* par hain"
     text = f"""
 ╔═══════════════════════╗
 ║  💎 *Subscription Plans* ║
@@ -232,17 +200,16 @@ async def plan_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 ━━━━━━━━━━━━━━━━━━━━
 🆓 *Free Plan:*
-• {FREE_DAILY_LIMIT} messages/day
-• Basic AI chat
-• Stickers support
+- {FREE_DAILY_LIMIT} messages/day
+- Basic AI chat
+- Stickers support
 
 👑 *Premium Plan:*
-• {PREMIUM_DAILY_LIMIT} messages/day
-• Advanced AI responses ⚡
-• Deep conversation mode 🧠
-• File analysis 📁
-• Priority speed
-• 24/7 VIP support
+- {PREMIUM_DAILY_LIMIT} messages/day
+- Advanced AI responses ⚡
+- Deep conversation mode 🧠
+- File analysis 📁
+- Priority speed
 
 ━━━━━━━━━━━━━━━━━━━━
 💰 Admin se contact karein!
@@ -251,30 +218,24 @@ async def plan_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(kb))
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN CHAT HANDLER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 @spam_check
 async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     msg  = update.message
     user = update.effective_user
     uid  = user.id
-
-    # Ensure user exists
     db.add_user(uid, user.username or "", user.first_name or "User")
 
-    # Route to file handlers
     if msg.document:
-        await handle_document(update, ctx); return
+        await handle_document(update, ctx)
+        return
     if msg.photo:
-        await handle_photo(update, ctx); return
+        await handle_photo(update, ctx)
+        return
 
     text = (msg.text or "").strip()
     if not text:
         return
 
-    # Daily limit check
     plan  = db.get_plan(uid)
     limit = PREMIUM_DAILY_LIMIT if plan == "premium" else FREE_DAILY_LIMIT
     used  = db.get_daily_usage(uid)
@@ -288,9 +249,7 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Typing indicator
     await ctx.bot.send_chat_action(chat_id=uid, action=ChatAction.TYPING)
-
     history   = db.get_history(uid)
     deep_mode = ctx.user_data.get("deep_mode", False)
 
@@ -304,56 +263,41 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     db.add_to_history(uid, "assistant", reply)
     db.increment_usage(uid)
 
-    # 10% chance of random sticker
     if random.random() < 0.10:
         await msg.reply_sticker(random.choice(STICKER_IDS))
 
     await msg.reply_text(reply, parse_mode=ParseMode.MARKDOWN)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# FILE HANDLERS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def handle_document(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     msg  = update.message
     doc  = msg.document
     name = doc.file_name or "document"
-    size = (doc.file_size or 0) / 1024
-
     await ctx.bot.send_chat_action(chat_id=msg.chat_id, action=ChatAction.TYPING)
-
     if doc.file_size > 5 * 1024 * 1024:
         await msg.reply_text("⚠️ *File bahut badi hai! Max 5MB allowed.*", parse_mode=ParseMode.MARKDOWN)
         return
-
     status = await msg.reply_text(f"📄 *{name}* mil gayi!\n⏳ Process ho rahi hai...", parse_mode=ParseMode.MARKDOWN)
-
     try:
         file      = await ctx.bot.get_file(doc.file_id)
         file_path = f"/tmp/{name}"
         await file.download_to_drive(file_path)
-
         content = ""
-        if name.endswith(".txt"):
+        if name.endswith((".txt", ".py", ".js", ".html", ".css", ".md")):
             with open(file_path, "r", errors="ignore") as f:
                 content = f.read()[:3000]
         elif name.endswith(".json"):
             import json
             with open(file_path, "r") as f:
                 content = json.dumps(json.load(f), indent=2, ensure_ascii=False)[:3000]
-        elif name.endswith(".py") or name.endswith(".js") or name.endswith(".html"):
-            with open(file_path, "r", errors="ignore") as f:
-                content = f.read()[:3000]
         else:
-            content = f"File '{name}' receive hua. Format directly readable nahi hai."
-
-        summary = await ai.summarize_file(name, content) if content else f"📄 `{name}` mili, lekin content read nahi ho saka."
+            content = f"File '{name}' receive hua."
+        summary = await ai.summarize_file(name, content)
         await status.edit_text(summary, parse_mode=ParseMode.MARKDOWN)
         os.remove(file_path)
     except Exception as e:
         logger.error(f"File error: {e}")
-        await status.edit_text("❌ *File process karne mein error.* Dobara try karo.", parse_mode=ParseMode.MARKDOWN)
+        await status.edit_text("❌ *File process mein error.* Dobara try karo.", parse_mode=ParseMode.MARKDOWN)
 
 
 async def handle_photo(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -364,19 +308,14 @@ async def handle_photo(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ADMIN COMMANDS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 @admin_only
 async def broadcast_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.args:
         await update.message.reply_text("📢 Usage: `/broadcast <message>`", parse_mode=ParseMode.MARKDOWN)
         return
-    bcast = " ".join(ctx.args)
-    users = db.get_all_users()
-    sent  = failed = 0
-
+    bcast  = " ".join(ctx.args)
+    users  = db.get_all_users()
+    sent   = failed = 0
     status = await update.message.reply_text(f"📤 Broadcasting to {len(users)} users...")
     for uid in users:
         try:
@@ -385,7 +324,6 @@ async def broadcast_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(0.04)
         except Exception:
             failed += 1
-
     await status.edit_text(
         f"✅ *Broadcast Complete!*\n📤 Sent: {sent}\n❌ Failed: {failed}",
         parse_mode=ParseMode.MARKDOWN
@@ -395,29 +333,32 @@ async def broadcast_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 @admin_only
 async def ban_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.args:
-        await update.message.reply_text("Usage: `/ban <user_id>`", parse_mode=ParseMode.MARKDOWN); return
+        await update.message.reply_text("Usage: `/ban <user_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
     try:
-        target = int(ctx.args[0])
-        db.ban_user(target)
-        await update.message.reply_text(f"🔴 User `{target}` ban ho gaya!", parse_mode=ParseMode.MARKDOWN)
+        db.ban_user(int(ctx.args[0]))
+        await update.message.reply_text(f"🔴 User `{ctx.args[0]}` ban ho gaya!", parse_mode=ParseMode.MARKDOWN)
     except ValueError:
         await update.message.reply_text("❌ Valid ID dalo.")
+
 
 @admin_only
 async def unban_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.args:
-        await update.message.reply_text("Usage: `/unban <user_id>`", parse_mode=ParseMode.MARKDOWN); return
+        await update.message.reply_text("Usage: `/unban <user_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
     try:
-        target = int(ctx.args[0])
-        db.unban_user(target)
-        await update.message.reply_text(f"✅ User `{target}` unban ho gaya!", parse_mode=ParseMode.MARKDOWN)
+        db.unban_user(int(ctx.args[0]))
+        await update.message.reply_text(f"✅ User `{ctx.args[0]}` unban ho gaya!", parse_mode=ParseMode.MARKDOWN)
     except ValueError:
         await update.message.reply_text("❌ Valid ID dalo.")
+
 
 @admin_only
 async def addpremium_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.args:
-        await update.message.reply_text("Usage: `/addpremium <user_id>`", parse_mode=ParseMode.MARKDOWN); return
+        await update.message.reply_text("Usage: `/addpremium <user_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
     try:
         target = int(ctx.args[0])
         db.set_plan(target, "premium")
@@ -433,16 +374,18 @@ async def addpremium_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     except ValueError:
         await update.message.reply_text("❌ Valid ID dalo.")
 
+
 @admin_only
 async def removepremium_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.args:
-        await update.message.reply_text("Usage: `/removepremium <user_id>`", parse_mode=ParseMode.MARKDOWN); return
+        await update.message.reply_text("Usage: `/removepremium <user_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
     try:
-        target = int(ctx.args[0])
-        db.set_plan(target, "free")
-        await update.message.reply_text(f"🔓 User `{target}` ka Premium remove kiya.", parse_mode=ParseMode.MARKDOWN)
+        db.set_plan(int(ctx.args[0]), "free")
+        await update.message.reply_text(f"🔓 User `{ctx.args[0]}` ka Premium remove kiya.", parse_mode=ParseMode.MARKDOWN)
     except ValueError:
         await update.message.reply_text("❌ Valid ID dalo.")
+
 
 @admin_only
 async def stats_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -460,11 +403,13 @@ async def stats_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 """
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
+
 @admin_only
 async def userlist_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     users = db.get_all_users_detail()
     if not users:
-        await update.message.reply_text("No users yet."); return
+        await update.message.reply_text("No users yet.")
+        return
     text = "👥 *Users (latest 20):*\n━━━━━━━━━━━━━━━\n"
     for u in users[:20]:
         icon = "👑" if u.get("plan") == "premium" else "🆓"
@@ -472,13 +417,9 @@ async def userlist_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CALLBACK QUERY HANDLER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def callback_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    q    = update.callback_query
-    uid  = update.effective_user.id
+    q   = update.callback_query
+    uid = update.effective_user.id
     await q.answer()
     d = q.data
 
@@ -490,7 +431,8 @@ async def callback_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         used  = db.get_daily_usage(uid)
         plan  = db.get_plan(uid)
         limit = PREMIUM_DAILY_LIMIT if plan == "premium" else FREE_DAILY_LIMIT
-        bar   = "█" * min(10, int((used/max(limit,1))*10)) + "░"*(10-min(10,int((used/max(limit,1))*10)))
+        filled = min(10, int((used / max(limit, 1)) * 10))
+        bar   = "█" * filled + "░" * (10 - filled)
         await q.message.reply_text(
             f"📊 *Quick Stats:*\n`[{bar}]` {used}/{limit} messages today\n💎 Plan: {'👑 Premium' if plan=='premium' else '🆓 Free'}",
             parse_mode=ParseMode.MARKDOWN
@@ -502,18 +444,16 @@ async def callback_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         else:
             kb = [[InlineKeyboardButton("📞 Admin Contact", url=f"https://t.me/{ADMIN_USERNAME}")]]
             await q.message.reply_text(
-                f"👑 *Premium Plan:*\n\n• Unlimited messages\n• Deep AI mode\n• File analysis\n• Priority speed\n\nAdmin se contact karein!",
-                parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(kb)
+                "👑 *Premium Plan:*\n\n• Unlimited messages\n• Deep AI mode\n• File analysis\n• Priority speed\n\nAdmin se contact karein!",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(kb)
             )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# NEW MEMBER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def new_member(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     for member in update.message.new_chat_members:
-        if member.is_bot: continue
+        if member.is_bot:
+            continue
         await update.message.reply_sticker(random.choice(STICKER_IDS))
         await update.message.reply_text(
             f"🎉 *{member.first_name} ji, NOVA AI group mein swagat hai!*\n/start karke mujhse baat karo! 😊",
@@ -521,31 +461,23 @@ async def new_member(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ERROR HANDLER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 async def error_handler(update: object, ctx: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Error: {ctx.error}", exc_info=True)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# REGISTER ALL HANDLERS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def main():
+    logger.info("🚀 NOVA AI v3.0 starting...")
+    app = Application.builder().token(BOT_TOKEN).build()
 
-def register_handlers(app: Application):
-    # User commands
-    app.add_handler(CommandHandler("start",   start))
-    app.add_handler(CommandHandler("help",    help_cmd))
-    app.add_handler(CommandHandler("profile", profile_cmd))
-    app.add_handler(CommandHandler("sticker", sticker_cmd))
-    app.add_handler(CommandHandler("reset",   reset_cmd))
-    app.add_handler(CommandHandler("deep",    deep_cmd))
-    app.add_handler(CommandHandler("normal",  normal_cmd))
-    app.add_handler(CommandHandler("plan",    plan_cmd))
-
-    # Admin commands
-    app.add_handler(CommandHandler("broadcast",     broadcast_cmd))
+    app.add_handler(CommandHandler("start",          start))
+    app.add_handler(CommandHandler("help",           help_cmd))
+    app.add_handler(CommandHandler("profile",        profile_cmd))
+    app.add_handler(CommandHandler("sticker",        sticker_cmd))
+    app.add_handler(CommandHandler("reset",          reset_cmd))
+    app.add_handler(CommandHandler("deep",           deep_cmd))
+    app.add_handler(CommandHandler("normal",         normal_cmd))
+    app.add_handler(CommandHandler("plan",           plan_cmd))
+    app.add_handler(CommandHandler("broadcast",      broadcast_cmd))
     app.add_handler(CommandHandler("ban",            ban_cmd))
     app.add_handler(CommandHandler("unban",          unban_cmd))
     app.add_handler(CommandHandler("addpremium",     addpremium_cmd))
@@ -553,32 +485,14 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("stats",          stats_cmd))
     app.add_handler(CommandHandler("userlist",       userlist_cmd))
 
-    # Messages
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND,  handle_message))
-    app.add_handler(MessageHandler(filters.Document.ALL,              handle_message))
-    app.add_handler(MessageHandler(filters.PHOTO,                     handle_message))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.Document.ALL,             handle_message))
+    app.add_handler(MessageHandler(filters.PHOTO,                    handle_message))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member))
-
-    # Callbacks
     app.add_handler(CallbackQueryHandler(callback_handler))
-
-    # Errors
     app.add_error_handler(error_handler)
 
-    return app
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN — Webhook (Render) or Polling (Local)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-def main():
-    logger.info("🚀 NOVA AI v3.0 starting...")
-    app = Application.builder().token(BOT_TOKEN).build()
-    app = register_handlers(app)
-
     if RENDER_URL:
-        # ── Webhook mode (Render production) ──────────────
         webhook_url = f"{RENDER_URL}{WEBHOOK_PATH}"
         logger.info(f"🌐 Webhook mode: {webhook_url}")
         app.run_webhook(
@@ -589,7 +503,6 @@ def main():
             drop_pending_updates=True
         )
     else:
-        # ── Polling mode (local development) ──────────────
         logger.info("🔄 Polling mode (local)")
         app.run_polling(drop_pending_updates=True)
 
